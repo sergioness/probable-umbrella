@@ -1,1 +1,3 @@
-console.log("hello, web scraping");
+require("dotenv").config();
+
+console.log(process.env.GREETING);
