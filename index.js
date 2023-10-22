@@ -1,6 +1,6 @@
 require("dotenv").config();
 const { JSDOM } = require("jsdom");
-const { upload } = require("./amazon");
+const { upload, download } = require("./amazon");
 
 function delay(callback, ms = 0) {
   return new Promise((resolve) => {
@@ -61,11 +61,17 @@ function withDate(repositories) {
   return { date, repositories };
 }
 
-getTrendingRepos("daily")
-  .then(withDate)
-  .then((obj) => {
-    console.log("date:%o\nrepos:%O", obj.date, obj.repositories);
-    return obj;
-  })
-  .then((json) => upload(json, "data.json"))
-  .then(console.log);
+function printObj(obj) {
+  console.log("date:%o\nrepos:%O", obj.date, obj.repositories);
+  return obj;
+}
+
+const FILE_NAME = "data.json";
+
+// getTrendingRepos("daily")
+//   .then(withDate)
+//   .then(printObj)
+//   .then((json) => upload(json, FILE_NAME))
+//   .then(console.log);
+
+download(FILE_NAME).then(printObj);

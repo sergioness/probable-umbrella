@@ -30,6 +30,19 @@ async function upload(file, filename) {
   return { filename, url, version: VersionId };
 }
 
+async function download(filename) {
+  const getObject = new GetObjectCommand({
+    Bucket: process.env.AWS_S3_BUCKET_NAME,
+    Key: filename,
+    ResponseContentType: "application/json",
+  });
+  const { Body, VersionId } = await s3.send(getObject);
+  const rawFile = await Body.transformToString();
+  const file = JSON.parse(rawFile);
+  return file;
+}
+
 module.exports = {
   upload,
+  download,
 };
