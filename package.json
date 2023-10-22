@@ -22,6 +22,8 @@
   },
   "homepage": "https://github.com/sergioness/probable-umbrella#readme",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.433.0",
+    "@aws-sdk/s3-request-presigner": "^3.433.0",
     "dotenv": "^16.3.1",
     "jsdom": "^22.1.0"
   }
