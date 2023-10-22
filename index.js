@@ -60,8 +60,54 @@ function withDate(repositories) {
   return { date, repositories };
 }
 
-getTrendingRepos("daily")
-  .then(withDate)
-  .then((obj) => {
-    console.log("date:%o\nrepos:%O", obj.date, obj.repositories);
-  });
+function getFormattedDate(unformattedDate) {
+    const date = new Date(unformattedDate);
+
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+
+    const formattedDate = `${day.toString().padStart(2, '0')}.${month.toString().padStart(2, '0')}.${year}`;
+
+    return formattedDate;
+}
+
+async function getData(since = "daily") {
+    const trendingRepos = await getTrendingRepos(since);
+    const trendingReposByDate = withDate(trendingRepos);
+
+    console.log(trendingReposByDate);
+
+    const date = getFormattedDate(trendingReposByDate.date);
+    const repositories = trendingReposByDate.repositories;
+
+    let repositoriesBlock = ``;
+
+    const maxRepositoriesToDisplay = Math.min(repositories.length, 10)
+
+    for (let i = 0; i < maxRepositoriesToDisplay; i++) {
+        let contributorsBlock = `|`;
+        repositories[i].contributors.forEach(contributor => contributorsBlock += `<a href='${contributor.url}'><u> ${contributor.name} </u></a> |`);
+
+        const programmingLanguageBlock = `\n<pre>Programming language: ${repositories[i].programmingLanguage || 'not using'}</pre>${contributorsBlock}\n\n`;
+        const titleBlock = `<b>[${i+1}]   ${repositories[i].title}\n</b>`;
+        const descriptionBlock = `${repositories[i].description}`;
+        const titleAndDescriptionBlock = `<a href='${repositories[i].url}'>${titleBlock}${descriptionBlock}</a>`;
+        const repositoryBlock = `${titleAndDescriptionBlock}${programmingLanguageBlock}`;
+
+        repositoriesBlock += repositoryBlock;
+    }
+
+    const message = {
+        header: `<b>Github Repositories ${since} Trends</b>\n\n`,
+        content: repositoriesBlock,
+        date: `\n<i>Date: ${String(date)}</i>`
+    }
+
+    let result = `${message.header}${message.content}${message.date}`;
+    return result;
+}
+
+module.exports = {
+    getData
+}
