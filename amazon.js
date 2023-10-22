@@ -2,6 +2,7 @@ const {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
+  HeadObjectCommand,
 } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 
@@ -42,7 +43,24 @@ async function download(filename) {
   return file;
 }
 
+async function hasLastUploadBeenValidSince(filename, sinceDate) {
+  const headObject = new HeadObjectCommand({
+    Bucket: process.env.AWS_S3_BUCKET_NAME,
+    Key: filename,
+  });
+  let isValid = false;
+  try {
+    const { LastModified } = await s3.send(headObject);
+    const lastModifiedDate = new Date(LastModified);
+    isValid = lastModifiedDate >= sinceDate;
+  } catch (error) {
+    console.warn("Could not retrieve the last upload by %s name", filename);
+  }
+  return isValid;
+}
+
 module.exports = {
   upload,
   download,
+  hasLastUploadBeenValidSince,
 };

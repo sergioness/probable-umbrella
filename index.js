@@ -1,6 +1,6 @@
 require("dotenv").config();
 const { JSDOM } = require("jsdom");
-const { upload, download } = require("./amazon");
+const { upload, download, hasLastUploadBeenValidSince } = require("./amazon");
 
 function delay(callback, ms = 0) {
   return new Promise((resolve) => {
@@ -16,7 +16,7 @@ function trim(string) {
     .join(" ");
 }
 
-async function getTrendingRepos(since = "daily") {
+async function getTrendingRepos(since) {
   const baseUrl = "https://github.com";
   const query = since ? `since=${since}` : "";
   const url = [`${baseUrl}/trending`, query].join("?");
@@ -56,9 +56,9 @@ async function getTrendingRepos(since = "daily") {
   return repositories;
 }
 
-function withDate(repositories) {
+function withDate(obj) {
   const date = new Date().toString();
-  return { date, repositories };
+  return { date, ...obj };
 }
 
 function printObj(obj) {
@@ -66,12 +66,48 @@ function printObj(obj) {
   return obj;
 }
 
-const FILE_NAME = "data.json";
+function getDateAgo(daysAgo = 0) {
+  const date = new Date();
+  date.setDate(date.getDate() - daysAgo);
+  return date;
+}
 
-// getTrendingRepos("daily")
-//   .then(withDate)
-//   .then(printObj)
-//   .then((json) => upload(json, FILE_NAME))
-//   .then(console.log);
+const START_DATE_GETTER_BY_TIME_RANGE = {
+  daily: () => {
+    const date = new Date();
+    date.setUTCHours(0, 0, 0, 0);
+    return date;
+  },
+  weekly: () => getDateAgo(7),
+  monthly: () => getDateAgo(30),
+};
 
-download(FILE_NAME).then(printObj);
+const DEFAULT_FILE_NAME = "data.json";
+
+const FILE_NAME_GETTER_BY_TIME_RANGE = {
+  daily: () => ["daily", DEFAULT_FILE_NAME].join("-"),
+  weekly: () => ["weekly", DEFAULT_FILE_NAME].join("-"),
+  monthly: () => ["monthly", DEFAULT_FILE_NAME].join("-"),
+};
+
+async function getTrendingReposFromCache(timeRange = "daily") {
+  const filename = FILE_NAME_GETTER_BY_TIME_RANGE[timeRange]();
+  const startDate = START_DATE_GETTER_BY_TIME_RANGE[timeRange]();
+  const isLastUploadValid = await hasLastUploadBeenValidSince(
+    filename,
+    startDate
+  );
+  let file = null;
+  if (isLastUploadValid) {
+    console.log("downloading the last version of %s file...", filename);
+    file = await download(filename);
+  } else {
+    console.log("uploading a new version of %s file...", filename);
+    const repositories = await getTrendingRepos(timeRange);
+    file = withDate({ repositories });
+    await upload(file, filename);
+  }
+  return file;
+}
+
+getTrendingReposFromCache("daily").then(printObj);
