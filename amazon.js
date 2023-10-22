@@ -54,7 +54,7 @@ async function hasLastUploadBeenValidSince(filename, sinceDate) {
     const lastModifiedDate = new Date(LastModified);
     isValid = lastModifiedDate >= sinceDate;
   } catch (error) {
-    console.warn("Could not retrieve the last upload by %s name", filename);
+    console.warn("Could not retrieve the last upload of %s file", filename);
   }
   return isValid;
 }
