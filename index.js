@@ -89,10 +89,10 @@ async function getData(since = "daily") {
         let contributorsBlock = `|`;
         repositories[i].contributors.forEach(contributor => contributorsBlock += `<a href='${contributor.url}'><u> ${contributor.name} </u></a> |`);
 
-        const programmingLanguageBlock = `\n<pre>Programming language: ${repositories[i].programmingLanguage || 'not using'}</pre>${contributorsBlock}\n\n`;
+        const programmingLanguageBlock = `\nProgramming language: ${repositories[i].programmingLanguage || 'not using'}\n${contributorsBlock}\n\n`;
         const titleBlock = `<b>[${i+1}]   ${repositories[i].title}\n</b>`;
         const descriptionBlock = `${repositories[i].description}`;
-        const titleAndDescriptionBlock = `<a href='${repositories[i].url}'>${titleBlock}${descriptionBlock}</a>`;
+        const titleAndDescriptionBlock = `${titleBlock}<a href='${repositories[i].url}'>${descriptionBlock || 'click to get more info'}</a>`;
         const repositoryBlock = `${titleAndDescriptionBlock}${programmingLanguageBlock}`;
 
         repositoriesBlock += repositoryBlock;

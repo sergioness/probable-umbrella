@@ -20,11 +20,11 @@ const commands = [
 
 ]
 
-const defaultCommand = {
-    start: '/start',
-    help: '/help',
-    menu: '/menu'
-}
+// const defaultCommand = {
+//     start: '/start',
+//     help: '/help',
+//     menu: '/menu'
+// }
 
 const menu = {
     daily: '⭐️ Daily',
@@ -33,19 +33,19 @@ const menu = {
     close: '❌ Close menu'
 }
 
-const mode = {
-    daily: 'daily',
-    weekly: 'weekly',
-    monthly: 'monthly',
-}
+// const mode = {
+//     daily: 'daily',
+//     weekly: 'weekly',
+//     monthly: 'monthly',
+// }
 
-const response = {
-    start: 'Bot is running',
-    help: '*Hello World*',
-    menu: 'Bot Menu',
-    menuClose: 'Menu was closed',
-    unknownCommand: 'Sorry, but IDK this command:'
-}
+// const response = {
+//     start: 'Bot is running',
+//     help: '*Hello World*',
+//     menu: 'Bot Menu',
+//     menuClose: 'Menu was closed',
+//     unknownCommand: 'Sorry, but IDK this command:'
+// }
 
 const keyBoardMenu = {
 
@@ -58,6 +58,20 @@ const keyBoardMenu = {
 
 }
 
+async function getDataScrapperResponseBuilder(freq) {
+    return {respond: async () => await scrapper.getData(freq), options: { parse_mode: "HTML", disable_web_page_preview: true }}
+}
+
+const responses = {
+    "/start": {respond: async () => "Bot is running", options: { parse_menu: "HTML" }},
+    "/help": {respond: async () => "*Hello World*", options: { parse_menu: "HTML" }},
+    "/menu": {respond: async () => "Bot Menu", options: keyBoardMenu},
+    [menu.daily]: getDataScrapperResponseBuilder('daily'),
+    "⭐️ Weekly": getDataScrapperResponseBuilder('weekly'),
+    "⭐️ Monthly": getDataScrapperResponseBuilder('monthly'),
+    "❌ Close menu": {respond: async () => "Menu was closed", options: { reply_markup: { remove_keyboard: true } }},
+  };
+
 function runTelegramBot() {
     console.debug("Telegram bot are creating...")
 
@@ -65,56 +79,21 @@ function runTelegramBot() {
 
     bot.setMyCommands(commands);
 
-    bot.on('text', async msg => {
-
-        try {
-
-            switch (msg.text) {
-
-                case defaultCommand.start:
-                    await bot.sendMessage(msg.chat.id, response.start);
-                break;
-
-                case defaultCommand.help:
-                    await bot.sendMessage(msg.chat.id, response.help, { parse_menu: "HTML" });
-                break;
-
-                case defaultCommand.menu:
-                    await bot.sendMessage(msg.chat.id, response.menu, keyBoardMenu)
-                break;
-
-                case menu.daily:
-                    await bot.sendMessage(msg.chat.id, await scrapper.getData(mode.daily), { parse_mode: "HTML", disable_web_page_preview: true });
-
-                break;
-
-                case menu.weekly:
-                    await bot.sendMessage(msg.chat.id, await scrapper.getData(mode.weekly), { parse_mode: "HTML", disable_web_page_preview: true });
-                break;
-
-                case menu.monthly:
-                    await bot.sendMessage(msg.chat.id, await scrapper.getData(mode.monthly), { parse_mode: "HTML", disable_web_page_preview: true });
-                break;
-
-                case menu.close:
-                    await bot.sendMessage(msg.chat.id, response.menuClose, { reply_markup: { remove_keyboard: true } })
-                break;
-
-                default:
-                    await bot.sendMessage(msg.chat.id, `${unknownCommand} ${msg.text}`);
-
-            }
-    
-        }
-        catch(error) {
-    
-            console.log(error);
-    
-        }
-    
-    })
+    bot.on('text', (msg) => { onMessage(bot, msg) })
 
     console.debug("Telegram bot was created!!!")
+}
+
+async function onMessage(bot, msg) {
+    const response = responses[msg.text];
+    console.debug(msg.text, response);
+    // console.debug()
+    const defaultResponse = {
+        respond: async () => `Sorry, but IDK this command: ${msg.text}`,
+        options: undefined
+    }
+    const {respond, options} = response ?? defaultResponse;
+    await bot.sendMessage(msg.chat.id, await respond(), options);
 }
 
 runTelegramBot()
